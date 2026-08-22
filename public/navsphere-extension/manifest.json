@@ -1,0 +1,1 @@
+{"manifest_version":3,"name":"NavSphere书签助手","version":"1.0.0","permissions":["bookmarks","storage"],"host_permissions":["https://navsphere-7600a.pages.dev/*"],"chrome_url_overrides":{"newtab":"newtab.html"},"action":{"default_popup":"popup.html"}}

@@ -1,0 +1,20 @@
+import { NextResponse } from 'next/server'
+import { auth } from '@/lib/auth'
+import { commitFile, getFileContent } from '@/lib/github'
+import { checkBookmark, classifyBookmark, flattenBookmarks, isGameAssist, type BookmarkStore } from '@/lib/bookmarks'
+export const runtime = 'edge'
+const path = 'src/navsphere/content/bookmarks.json'
+const empty = (): BookmarkStore => ({ bookmarks: [], backups: [] })
+async function store() { return (await getFileContent(path) as BookmarkStore) || empty() }
+async function save(data: BookmarkStore, token: string, message: string) { await commitFile(path, JSON.stringify(data, null, 2), message, token) }
+async function sessionToken() { const s = await auth(); return s?.user?.accessToken }
+
+export async function GET(req: Request) { const token = await sessionToken(); if (!token) return new Response('Unauthorized', { status: 401 }); const url = new URL(req.url); const s = await store(); const items = s.bookmarks.filter(b => (!url.searchParams.get('source') || b.source === url.searchParams.get('source')) && (!url.searchParams.get('q') || `${b.title} ${b.url}`.toLowerCase().includes(url.searchParams.get('q')!.toLowerCase()))); return NextResponse.json({ ...s, bookmarks: items }) }
+export async function POST(req: Request) {
+  const token = await sessionToken(); if (!token) return new Response('Unauthorized', { status: 401 }); const body = await req.json(); const data = await store()
+  if (body.action === 'import') { const source = body.source || 'Default'; const incoming = flattenBookmarks(body.tree || [], source).map(b => ({ ...b, key: `${source}:${b.id}`, category: classifyBookmark(b), status: 'unchecked' })); const keys = new Set(incoming.map(b => b.key)); data.bookmarks = [...data.bookmarks.filter(b => !keys.has(b.key)), ...incoming]; await save(data, token, `Import bookmarks (${source})`); return NextResponse.json({ imported: incoming.length }) }
+  if (body.action === 'check') { for (const b of data.bookmarks) { if (b.status === 'deleted' || !b.url) continue; const result = await checkBookmark(b.url); b.httpStatus = result.status; b.status = result.state; b.checkedAt = new Date().toISOString() } await save(data, token, 'Check bookmark links'); return NextResponse.json(data) }
+  if (body.action === 'cleanup') { const targets = data.bookmarks.filter(b => isGameAssist(b) || b.status === 'dead'); const backup = { id: crypto.randomUUID(), createdAt: new Date().toISOString(), source: body.source || 'all', bookmarks: targets, reason: 'cleanup' }; data.backups.push(backup); const keys = new Set(targets.map(b => b.key)); data.bookmarks = data.bookmarks.filter(b => !keys.has(b.key)); await save(data, token, 'Cleanup bookmarks'); return NextResponse.json({ removed: targets.length, backupId: backup.id, backup }) }
+  if (body.action === 'restore') { const backup = data.backups.find(b => b.id === body.backupId); if (!backup) return NextResponse.json({ error: 'Backup not found' }, { status: 404 }); const existing = new Set(data.bookmarks.map(b => b.key)); data.bookmarks.push(...backup.bookmarks.filter(b => !existing.has(`${b.source}:${b.id}`)).map(b => ({ ...b, key: `${b.source}:${b.id}`, category: classifyBookmark(b), status: 'restored' }))); await save(data, token, 'Restore bookmark backup'); return NextResponse.json({ restored: backup.bookmarks.length }) }
+  return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
+}

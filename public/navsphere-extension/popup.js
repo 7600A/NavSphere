@@ -1,0 +1,3 @@
+const api='https://navsphere-7600a.pages.dev/api/bookmarks'; const out=document.querySelector('#out'); const source=location.hostname||'Chrome';
+async function send(action, extra={}){const r=await fetch(api,{method:'POST',headers:{'content-type':'application/json'},credentials:'include',body:JSON.stringify({action,source,...extra})}); const j=await r.json(); out.textContent=JSON.stringify(j,null,2); return j}
+document.querySelector('#sync').onclick=()=>chrome.bookmarks.getTree().then(tree=>send('import',{tree})); document.querySelector('#check').onclick=async()=>{await send('check'); const j=await send('cleanup'); await chrome.storage.local.set({lastBackup:j.backupId}); for(const b of j.backup?.bookmarks||[]) { try{await chrome.bookmarks.remove(b.id)}catch{} }}

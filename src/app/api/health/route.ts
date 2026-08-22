@@ -6,6 +6,6 @@ export async function GET() {
     app: 'NavSphere',
     status: 'ok',
     timestamp: new Date().toISOString(),
-    uptime: process.uptime()
+    runtime: 'edge'
   })
 }
