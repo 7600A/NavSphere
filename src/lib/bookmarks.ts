@@ -14,11 +14,12 @@ export function flattenBookmarks(tree: any[], source: string, path: string[] = [
 
 export function classifyBookmark(b: BookmarkNode) {
   const text = `${b.title} ${b.url} ${b.path.join(' ')}`.toLowerCase()
-  if (/ai|chatgpt|claude|gemini|人工智能/.test(text)) return 'AI工具'
-  if (/github|gitlab|code|开发|编程|npm/.test(text)) return '开发工具'
-  if (/news|新闻|reddit|论坛|社区/.test(text)) return '媒体资讯'
-  if (/design|figma|icon|设计|配色|素材/.test(text)) return '设计资源'
-  if (/game|游戏|辅助网/.test(text)) return '游戏'
+  const url = (b.url || '').toLowerCase()
+  if (/chatgpt|claude\.ai|anthropic|gemini\.google|midjourney|stability\.ai|huggingface|replicate|perplexity|人工智能|大模型|提示词|ai编程|ai工具/.test(text)) return 'AI工具'
+  if (/github\.|gitlab\.|bitbucket\.|npmjs\.|stackoverflow|vercel|cloudflare|docker|kubernetes|其?开发|编程|代码|api|sdk|数据库|运维|服务器|terminal|console/.test(text)) return '开发工具'
+  if (/youtube|bilibili|douban|reddit|twitter|x\.com|weibo|知乎|新闻|资讯|论坛|社区|播客|视频|电影|音乐/.test(text)) return '媒体资讯'
+  if (/figma|canva|dribbble|behance|unsplash|icon|设计|配色|素材|字体|图片|插画|logo|ui|ux/.test(text)) return '设计资源'
+  if (/steam|epicgames|itch\.io|taptap|游戏|game|minecraft|genshin|原神|网游/.test(text)) return '游戏'
   return '其他'
 }
 
