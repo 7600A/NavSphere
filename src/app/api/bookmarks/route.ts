@@ -5,7 +5,20 @@ import { checkBookmark, classifyBookmark, flattenBookmarks, isGameAssist, type B
 export const runtime = 'edge'
 const path = 'src/navsphere/content/bookmarks.json'
 const empty = (): BookmarkStore => ({ bookmarks: [], backups: [] })
-async function store() { return (await getFileContent(path) as BookmarkStore) || empty() }
+
+function normalizeStore(value: unknown): BookmarkStore {
+  if (!value || typeof value !== 'object') return empty()
+
+  const candidate = value as Partial<BookmarkStore>
+  return {
+    bookmarks: Array.isArray(candidate.bookmarks) ? candidate.bookmarks : [],
+    backups: Array.isArray(candidate.backups) ? candidate.backups : [],
+  }
+}
+
+async function store() {
+  return normalizeStore(await getFileContent(path))
+}
 async function save(data: BookmarkStore, token: string, message: string) { await commitFile(path, JSON.stringify(data, null, 2), message, token) }
 async function sessionToken() { const s = await auth(); return s?.user?.accessToken }
 
