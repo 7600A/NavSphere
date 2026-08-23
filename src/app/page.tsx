@@ -1,10 +1,8 @@
-import { NavigationContent } from '@/components/navigation-content'
 import { Metadata } from 'next/types'
-import { ScrollToTop } from '@/components/ScrollToTop'
-import { Container } from '@/components/ui/container'
 import type { SiteConfig } from '@/types/site'
 import navigationData from '@/navsphere/content/navigation.json'
 import siteDataRaw from '@/navsphere/content/site.json'
+import { redirect } from 'next/navigation'
 
 import { getProcessedData } from '@/lib/data-loader'
 
@@ -26,12 +24,5 @@ export function generateMetadata(): Metadata {
 }
 
 export default function HomePage() {
-  const { navigationData, siteData } = getData()
-
-  return (
-    <Container>
-      <NavigationContent navigationData={navigationData} siteData={siteData} />
-      <ScrollToTop />
-    </Container>
-  )
+  redirect('/bookmarks')
 }

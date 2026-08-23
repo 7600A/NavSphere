@@ -6,7 +6,7 @@ import { ArrowLeft, Bookmark, Search } from 'lucide-react'
 
 type Item = { key: string; title: string; url: string; category: string; source: string; path?: string[]; status: string }
 
-const categories = ['AI工具', '开发工具', '媒体资讯', '设计资源', '游戏', '其他']
+const categoryOrder = ['AI工具', '开发工具', '网络与云服务', '网盘与资源', '软件工具', '影视与阅读', '媒体资讯', '设计资源', '学习教育', '邮箱与通讯', '商业与生活', '游戏', '其他']
 
 export default function BookmarksPage() {
   const [items, setItems] = useState<Item[]>([])
@@ -41,7 +41,7 @@ export default function BookmarksPage() {
     </header>
     {error && <div className="rounded-lg border border-destructive/40 p-4 text-destructive">{error}</div>}
     <div className="space-y-10">
-      {categories.map(category => {
+      {[...categoryOrder, ...Array.from(new Set(visible.map(item => item.category))).filter(category => !categoryOrder.includes(category))].map(category => {
         const categoryItems = visible.filter(item => item.category === category)
         if (!categoryItems.length) return null
         return <section key={category}>
