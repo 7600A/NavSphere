@@ -5,7 +5,7 @@ export type BookmarkStore = { bookmarks: BookmarkRecord[]; backups: Array<{ id: 
 export function flattenBookmarks(tree: any[], source: string, path: string[] = []): BookmarkNode[] {
   const out: BookmarkNode[] = []
   for (const node of tree || []) {
-    const nextPath = node.url ? path : [...path, node.title || '未命名']
+    const nextPath = node.url || !node.title ? path : [...path, node.title]
     if (node.url) out.push({ id: String(node.id), title: node.title || node.url, url: node.url, path, source, folderId: node.parentId })
     out.push(...flattenBookmarks(node.children || [], source, nextPath))
   }
@@ -19,7 +19,7 @@ export function classifyBookmark(b: BookmarkNode) {
   if (/news|新闻|reddit|论坛|社区/.test(text)) return '媒体资讯'
   if (/design|figma|icon|设计|配色|素材/.test(text)) return '设计资源'
   if (/game|游戏|辅助网/.test(text)) return '游戏'
-  return b.path[0] || '其他'
+  return '其他'
 }
 
 export function isGameAssist(b: BookmarkRecord) {
