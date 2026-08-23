@@ -26,6 +26,15 @@ export async function GET(req: Request) { const token = await sessionToken(); if
 export async function POST(req: Request) {
   const token = await sessionToken(); if (!token) return new Response('Unauthorized', { status: 401 }); const body = await req.json(); const data = await store()
   if (body.action === 'import') { const source = body.source || 'Default'; const incoming = flattenBookmarks(body.tree || [], source).map(b => ({ ...b, key: `${source}:${b.id}`, category: classifyBookmark(b), status: 'unchecked' })); const keys = new Set(incoming.map(b => b.key)); data.bookmarks = [...data.bookmarks.filter(b => !keys.has(b.key)), ...incoming]; await save(data, token, `Import bookmarks (${source})`); return NextResponse.json({ imported: incoming.length }) }
+  if (body.action === 'classify') {
+    const counts: Record<string, number> = {}
+    for (const bookmark of data.bookmarks) {
+      bookmark.category = classifyBookmark(bookmark)
+      counts[bookmark.category] = (counts[bookmark.category] || 0) + 1
+    }
+    await save(data, token, 'Classify bookmarks')
+    return NextResponse.json({ classified: data.bookmarks.length, counts })
+  }
   if (body.action === 'check') {
     const requestedKeys = Array.isArray(body.keys) ? new Set(body.keys.filter((key: unknown): key is string => typeof key === 'string')) : undefined
     const limit = Math.min(Math.max(Number(body.limit) || 20, 1), 50)
