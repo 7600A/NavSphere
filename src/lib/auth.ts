@@ -86,6 +86,13 @@ async function withAuthDiagnostic(
   const headers = new Headers(response.headers)
   headers.set('x-navsphere-auth-diagnostic', lastAuthError)
 
+  const location = headers.get('location')
+  if (location) {
+    const redirectUrl = new URL(location, request.url)
+    redirectUrl.searchParams.set('_authdiag', lastAuthError.slice(0, 500))
+    headers.set('location', redirectUrl.toString())
+  }
+
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
